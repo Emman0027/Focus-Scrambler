@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="TIME STATUS"
-            android:textSize="20"
+            android:textSize="20dp"
             tools:layout_editor_absoluteX="127dp"
             tools:layout_editor_absoluteY="106dp" />
 
@@ -60,8 +60,8 @@
             android:layout_width="231dp"
             android:layout_height="58dp"
             android:text="BREAK ACTIVITY"
-            android:textSize="25"
             android:textAlignment="center"
+            android:textSize="25dp"
             tools:layout_editor_absoluteX="74dp"
             tools:layout_editor_absoluteY="373dp" />
 
@@ -70,7 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Break Activity Message"
-            android:textSize="20"
+            android:textSize="20dp"
             tools:layout_editor_absoluteX="84dp"
             tools:layout_editor_absoluteY="346dp" />
 
