@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FocusScrambler">
         <activity
+            android:name=".dashboard_page"
+            android:exported="false" />
+        <activity
+            android:name=".signup_page"
+            android:exported="false" />
+        <activity
             android:name=".login_page"
             android:exported="false" />
         <activity

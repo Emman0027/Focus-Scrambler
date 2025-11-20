@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Focus Scrambler</string>
+    <string name="welcome_back_please_sign_in">Welcome Back! Please sign in.</string>
+    <string name="don_t_have_an_account">Don’t have an account?</string>
+    <string name="or">or</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="show_password">Show Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="forgot_password">Forgot Password</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="enter_first_name_here">Enter First Name here</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="enter_last_name_here">Enter Last Name here</string>
+    <string name="enter_user_name">Enter User Name</string>
+    <string name="username">Username</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_an_account">Already have an account?</string>
 </resources>

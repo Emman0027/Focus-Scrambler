@@ -1,35 +1,24 @@
 package com.example.focusscrambler;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.activity.EdgeToEdge;
 
-public class login_page extends AppCompatActivity {
+public class dashboard_page extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_login_page);
-
-        // Apply padding for system bars if using EdgeToEdge
+        setContentView(R.layout.activity_dashboard_page);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
-        });
-
-        // Button to open signin_page
-        Button btn_signin = findViewById(R.id.btn_signup_page);
-        btn_signin.setOnClickListener(v -> {
-            Intent intent = new Intent(login_page.this, signup_page.class);
-            startActivity(intent);
         });
     }
 }
