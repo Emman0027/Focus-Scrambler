@@ -17,4 +17,19 @@
     <string name="username">Username</string>
     <string name="confirm_password">Confirm Password</string>
     <string name="already_have_an_account">Already have an account?</string>
+    <string name="_00_00">00:00</string>
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
+    <string name="pause">Pause</string>
+    <string name="today_s_progress">Today\'s Progress</string>
+    <string name="title_activity_dashboard_withnav_page">dashboard_withnav_page</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="welcome">Welcome !</string>
+    <string name="create">CREATE</string>
+    <string name="login">LOGIN</string>
 </resources>

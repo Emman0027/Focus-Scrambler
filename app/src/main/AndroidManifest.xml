@@ -12,6 +12,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FocusScrambler">
         <activity
+            android:name=".front_page"
+            android:exported="false" />
+        <activity
+            android:name=".dialog_timer_control"
+            android:exported="false" />
+        <activity
+            android:name=".dashboard_withnav_page"
+            android:exported="false"
+            android:label="@string/title_activity_dashboard_withnav_page" />
+        <activity
             android:name=".dashboard_page"
             android:exported="false" />
         <activity

@@ -47,6 +47,39 @@ public class DatabaseManager {
         return cursor;
     }
 
+    public Cursor fetchUserByEmail(String email) {
+        // Define the columns you want to retrieve
+        String[] columns = new String[]{
+                DatabaseHelper.USER_ID,
+                DatabaseHelper.USER_EMAIL,
+                DatabaseHelper.USER_PASSWORD // Important: We need the password to compare it
+                // Add other columns like USER_FIRST_NAME if you need them
+        };
+
+        // Define the selection criteria (WHERE clause)
+        // The '?' is a placeholder to prevent SQL injection.
+        String selection = DatabaseHelper.USER_EMAIL + " = ?";
+
+        // Define the arguments for the placeholder
+        String[] selectionArgs = new String[]{email};
+
+        // Execute the query
+        // The query will be: SELECT _id, email, password FROM users WHERE email = ?
+        Cursor cursor = database.query(
+                DatabaseHelper.DATABASE_TABLE, // Table name
+                columns,                       // Columns to return
+                selection,                     // The WHERE clause
+                selectionArgs,                 // The values for the WHERE clause
+                null,                          // groupBy
+                null,                          // having
+                null                           // orderBy
+        );
+
+        if (cursor != null) {
+            cursor.moveToFirst();
+        }
+        return cursor;
+    }
 
     public int update(long _id, String username, String firstname, String lastname, String email, String password) {
         ContentValues contentValues = new ContentValues();

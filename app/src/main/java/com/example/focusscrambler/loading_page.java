@@ -34,7 +34,7 @@ public class loading_page extends AppCompatActivity {
             @Override
             public void run() {
                 // Create an Intent to start the login_page activity
-                Intent intent = new Intent(loading_page.this, login_page.class);
+                Intent intent = new Intent(loading_page.this, front_page.class);
                 startActivity(intent);
 
                 // Finish the loading_page activity so the user can't go back to it

@@ -27,7 +27,7 @@ public class signup_page extends AppCompatActivity {
 
     private Button btn_signup;
     private Button btn_signin_page;
-    private Button btn_fetch;
+
     private DatabaseManager dbManager;
 
     @Override
@@ -61,44 +61,9 @@ public class signup_page extends AppCompatActivity {
 
         btn_signup = findViewById(R.id.btn_signup);
         btn_signin_page = findViewById(R.id.btn_signup_page);
-        btn_fetch = findViewById(R.id.fetch_button);
 
-        btn_fetch.setOnClickListener(v -> {
 
-            Cursor cursor = dbManager.fetch(); // your fetch() method
 
-            if (cursor == null || cursor.getCount() == 0) {
-                Toast.makeText(this, "No data found", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            StringBuilder builder = new StringBuilder();
-
-            do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_ID));
-                String fname = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_FIRST_NAME));
-                String lname = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_LAST_NAME));
-                String username = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_USERNAME));
-                String email = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_EMAIL));
-                String password = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_PASSWORD));
-
-                builder.append("ID: ").append(id).append("\n")
-                        .append("First Name: ").append(fname).append("\n")
-                        .append("Last Name: ").append(lname).append("\n")
-                        .append("Username: ").append(username).append("\n")
-                        .append("Email: ").append(email).append("\n")
-                        .append("Password: ").append(password).append("\n\n");
-
-            } while (cursor.moveToNext());
-
-            cursor.close();
-
-            // Show the data
-            Toast.makeText(this, builder.toString(), Toast.LENGTH_LONG).show();
-
-            // Optional: print to Logcat
-            Log.d("FETCH_SQL", builder.toString());
-        });
         // ✔ SIGNUP BUTTON (with password confirmation)
         btn_signup.setOnClickListener(v -> {
 

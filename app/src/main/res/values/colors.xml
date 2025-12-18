@@ -11,4 +11,6 @@
     <color name="blue">#102f75</color>
     <color name="light_blue">#afebf6</color>
     <color name="something_blue">#59b1c2</color>
+    <color name="green">#4ba875</color>
+    <color name="wave_color">#0099ff</color>
 </resources>
