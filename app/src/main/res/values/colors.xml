@@ -13,16 +13,18 @@
     <color name="something_blue">#59b1c2</color>
     <color name="green">#4ba875</color>
     <color name="wave_color">#0099ff</color>
-    <color name="purple_500">#0099ff</color> <!-- Example blue -->
-    <color name="purple_700">#007ACC</color> <!-- Example darker blue -->
-    <color name="teal_200">#7ED321</color> <!-- Your green accent -->
-    <color name="teal_700">#5BBE1A</color> <!-- Example darker green -->
 
-    <!-- Standard colors -->
+    <color name="purple_500">#0099ff</color> <!-- Your brand blue -->
+    <color name="purple_700">#007ACC</color> <!-- Your darker brand blue -->
+    <color name="teal_200">#7ED321</color> <!-- Your accent green -->
+    <color name="teal_700">#5BBE1A</color> <!-- Your darker accent green -->
+
+    <!-- Standard Colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
 
-    <!-- Specific colors used in layout -->
+    <!-- Specific Colors from your layout -->
+
     <color name="medium_grey">#666666</color>
     <color name="dark_grey">#333333</color>
     <color name="light_grey">#E0E0E0</color>
@@ -31,4 +33,5 @@
     <color name="red_error">#FF4444</color>
     <color name="light_surface">#F5F5F5</color>
     <color name="primary_text_dark_blue">#102f75</color>
+    <color name="page_background_light">#F5F5F5</color> <!-- For consistent background -->
 </resources>

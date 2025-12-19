@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.SeekBar; // Changed import
+import android.widget.Switch; // Changed import
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,18 +16,16 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar; // Import Toolbar
+import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.slider.Slider; // Import Slider
-import com.google.android.material.switchmaterial.SwitchMaterial; // Import SwitchMaterial
 
 import java.io.IOException;
-import java.util.Locale; // Import Locale
+import java.util.Locale;
 
 public class account_page extends AppCompatActivity {
 
@@ -38,16 +38,16 @@ public class account_page extends AppCompatActivity {
     // Personal Info TextViews
     private TextView tvUsername, tvFirstName, tvLastName, tvEmail;
 
-    // Sliders and Switch
-    private Slider sliderFocusDuration;
+    // SeekBar and Switch (AppCompat compatible)
+    private SeekBar seekbarFocusDuration; // Changed type
     private TextView tvFocusDurationValue;
-    private Slider sliderBreakDuration;
+    private SeekBar seekbarBreakDuration; // Changed type
     private TextView tvBreakDurationValue;
-    private SwitchMaterial switchDoNotDisturb;
+    private Switch switchDoNotDisturb; // Changed type
 
     // Buttons
     private Button btnSaveChanges;
-    private CardView cardLogout; // Logout is now a CardView
+    private CardView cardLogout;
 
     private ActivityResultLauncher<String> pickImageLauncher;
 
@@ -65,9 +65,9 @@ public class account_page extends AppCompatActivity {
 
         // Initialize Toolbar
         toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar); // Set the toolbar as the activity's action bar
+        setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(true); // Ensure title is shown
+            getSupportActionBar().setDisplayShowTitleEnabled(true);
         }
 
         // Initialize UI elements
@@ -82,12 +82,12 @@ public class account_page extends AppCompatActivity {
         tvLastName = findViewById(R.id.tv_last_name);
         tvEmail = findViewById(R.id.tv_email);
 
-        // Sliders and Switch
-        sliderFocusDuration = findViewById(R.id.slider_focus_duration);
+        // SeekBar and Switch (AppCompat compatible)
+        seekbarFocusDuration = findViewById(R.id.seekbar_focus_duration); // Changed ID
         tvFocusDurationValue = findViewById(R.id.tv_focus_duration_value);
-        sliderBreakDuration = findViewById(R.id.slider_break_duration);
+        seekbarBreakDuration = findViewById(R.id.seekbar_break_duration); // Changed ID
         tvBreakDurationValue = findViewById(R.id.tv_break_duration_value);
-        switchDoNotDisturb = findViewById(R.id.switch_do_not_disturb);
+        switchDoNotDisturb = findViewById(R.id.switch_do_not_disturb); // Changed type
 
         // Buttons
         btnSaveChanges = findViewById(R.id.btn_save_settings);
@@ -104,7 +104,6 @@ public class account_page extends AppCompatActivity {
                 Toast.makeText(this, "Activities clicked (not implemented)", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (item.getItemId() == R.id.navigation_account) {
-                // Already on this page
                 return true;
             }
             return false;
@@ -131,33 +130,64 @@ public class account_page extends AppCompatActivity {
                     }
                 });
 
-        // --- Set click listener for the profile picture holder ---
         profileCard.setOnClickListener(v -> openImagePicker());
         cameraIcon.setOnClickListener(v -> openImagePicker());
 
-        // --- Set up Slider Listeners ---
-        sliderFocusDuration.addOnChangeListener((slider, value, fromUser) -> {
-            tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%.0f min", value));
-        });
+        // --- Set up SeekBar Listeners ---
+        seekbarFocusDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                // SeekBars don't have stepSize directly like Sliders, so we manually adjust based on min/step
+                int min = seekBar.getMin();
+                int steppedProgress = ((progress - min) / 5) * 5 + min; // Ensure it snaps to 5s
+                if (steppedProgress < min) steppedProgress = min; // ensure it doesn't go below min if progress is very small
+                seekBar.setProgress(steppedProgress); // Update seekBar visually if needed
 
-        sliderBreakDuration.addOnChangeListener((slider, value, fromUser) -> {
-            tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%.0f min", value));
+                tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%d min", steppedProgress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
+        seekbarFocusDuration.setMin(5); // Set min programmatically as well for older API compatibility
+        seekbarFocusDuration.setMax(90); // Max is also for older API
+
+        seekbarBreakDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                // For a step size of 1, progress is usually fine.
+                // If step size is different, apply similar logic as above.
+                tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%d min", progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        seekbarBreakDuration.setMin(1);
+        seekbarBreakDuration.setMax(30);
+
+        // Set initial values for TextViews (after setting listeners to avoid issues)
+        tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%d min", seekbarFocusDuration.getProgress()));
+        tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%d min", seekbarBreakDuration.getProgress()));
 
         // --- Set up Save and Logout Button Listeners ---
         btnSaveChanges.setOnClickListener(v -> {
-            // Implement save logic here
             Toast.makeText(this, "Settings Saved!", Toast.LENGTH_SHORT).show();
-            // Example: Save values to SharedPreferences or database
-            // float focusDuration = sliderFocusDuration.getValue();
-            // float breakDuration = sliderBreakDuration.getValue();
+            // Implement save logic here:
+            // int focusDuration = seekbarFocusDuration.getProgress();
+            // int breakDuration = seekbarBreakDuration.getProgress();
             // boolean dndEnabled = switchDoNotDisturb.isChecked();
         });
 
         cardLogout.setOnClickListener(v -> {
-            // Implement logout logic here
             Toast.makeText(this, "Logged out!", Toast.LENGTH_SHORT).show();
-            // Example: Clear user session, navigate to login page
+            // Implement logout logic here:
             // Intent logoutIntent = new Intent(this, login_page.class);
             // logoutIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             // startActivity(logoutIntent);
@@ -180,12 +210,13 @@ public class account_page extends AppCompatActivity {
         tvLastName.setText("Banas");
         tvEmail.setText("marius.banas@example.com");
 
-        sliderFocusDuration.setValue(30f); // Set initial slider value
-        tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%.0f min", 30f));
+        // Set SeekBar progress for initial loading
+        seekbarFocusDuration.setProgress(30);
+        tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%d min", 30));
 
-        sliderBreakDuration.setValue(10f);
-        tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%.0f min", 10f));
+        seekbarBreakDuration.setProgress(10);
+        tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%d min", 10));
 
-        switchDoNotDisturb.setChecked(true); // Example: DND enabled by default
+        switchDoNotDisturb.setChecked(true);
     }
 }

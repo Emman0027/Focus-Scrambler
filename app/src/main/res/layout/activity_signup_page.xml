@@ -10,16 +10,18 @@
 
     <Button
         android:id="@+id/btn_signup_page"
-        android:layout_width="80dp"
-        android:layout_height="18dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="9dp"
+        android:layout_width="99dp"
+        android:layout_height="41dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
         android:background="@android:color/transparent"
         android:elevation="0dp"
         android:gravity="start"
         android:text="@string/sign_in"
+        android:textColor="@color/black"
         android:textAllCaps="false"
-        android:textSize="13sp"
+
+
         app:layout_constraintStart_toEndOf="@+id/lbl_already_have_an_account"
         app:layout_constraintTop_toBottomOf="@+id/btn_signup"
         tools:ignore="MissingConstraints,SmallSp" />
@@ -49,6 +51,7 @@
         android:hint="@string/confirm_password"
         android:inputType="textPassword"
         android:textColor="@color/black"
+        android:textColorHint="@color/medium_grey"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
         app:layout_constraintTop_toBottomOf="@+id/lbl_confirmpass" />
@@ -77,6 +80,7 @@
         android:hint="@string/password"
         android:inputType="textPassword"
         android:textColor="@color/black"
+        android:textColorHint="@color/medium_grey"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
         app:layout_constraintTop_toBottomOf="@+id/lbl_pass" />
@@ -105,6 +109,7 @@
         android:hint="@string/email"
         android:inputType="textEmailAddress"
         android:textColor="@color/black"
+        android:textColorHint="@color/medium_grey"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
         app:layout_constraintTop_toBottomOf="@+id/lbl_email" />
@@ -133,6 +138,7 @@
         android:hint="@string/enter_user_name"
         android:inputType="text"
         android:textColor="@color/black"
+        android:textColorHint="@color/medium_grey"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
         app:layout_constraintTop_toBottomOf="@+id/lbl_user" />
@@ -171,6 +177,7 @@
         android:autofillHints="false"
         android:background="@drawable/edittext_border"
         android:hint="@string/enter_first_name_here"
+        android:textColorHint="@color/medium_grey"
         android:inputType="text"
         android:textColor="@color/black"
         android:textSize="16sp"
@@ -200,6 +207,7 @@
         android:autofillHints="false"
         android:background="@drawable/edittext_border"
         android:hint="@string/enter_last_name_here"
+        android:textColorHint="@color/medium_grey"
         android:inputType="text"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
@@ -225,6 +233,7 @@
         android:layout_marginTop="20dp"
         android:background="@drawable/edittext_border"
         android:text="@string/sign_up"
+        android:textColor="@color/black"
         android:textAllCaps="false"
         app:layout_constraintEnd_toEndOf="@+id/imageView4"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
@@ -237,6 +246,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/already_have_an_account"
+        android:textColor="@color/medium_grey"
         app:layout_constraintEnd_toEndOf="@+id/imageView4"
         app:layout_constraintHorizontal_bias="0.32"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
@@ -249,6 +259,7 @@
         android:layout_marginStart="22dp"
         android:layout_marginTop="5dp"
         android:layout_marginEnd="134dp"
+
         android:foregroundGravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/lbl_signup"

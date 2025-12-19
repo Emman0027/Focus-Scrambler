@@ -1,9 +1,11 @@
 package com.example.focusscrambler;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -53,7 +55,7 @@ public class login_page extends AppCompatActivity {
         editTextEmail = findViewById(R.id.txt_email);
         editTextPassword = findViewById(R.id.txt_pass);
         Button btn_login_action = findViewById(R.id.btn_login);
-        chkPass = findViewById(R.id.chk_pass);  // ✅ Password reveal checkbox
+        chkPass = findViewById(R.id.chk_pass);
 
         // Login button click
         btn_login_action.setOnClickListener(v -> loginUser());
@@ -65,59 +67,124 @@ public class login_page extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // ✅ Password reveal toggle
+        // Password reveal toggle
         chkPass.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                // Show password
                 editTextPassword.setTransformationMethod(null);
             } else {
-                // Hide password
                 editTextPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
             }
-            // Move cursor to end after transformation
             editTextPassword.setSelection(editTextPassword.getText().length());
         });
     }
 
     // ----------------------------------------
-    // LOGIN FUNCTION
+    // UPDATED LOGIN FUNCTION (BCrypt Compatible)
     // ----------------------------------------
     private void loginUser() {
-        String email = editTextEmail.getText().toString().trim();
+        String emailOrUsername = editTextEmail.getText().toString().trim();
         String password = editTextPassword.getText().toString().trim();
 
         // Basic validation
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter both email and password", Toast.LENGTH_SHORT).show();
+        if (emailOrUsername.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Please enter both email/username and password", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Fetch user by email
-        Cursor cursor = dbManager.fetchUserByEmail(email);
-
-        // Check if email exists
-        if (cursor == null || cursor.getCount() == 0) {
-            Toast.makeText(this, "Email account does not exist", Toast.LENGTH_SHORT).show();
-            if (cursor != null) cursor.close();
-            return;
+        // Try login with username first, then email
+        if (attemptLoginByUsername(emailOrUsername, password)) {
+            return; // Success
         }
 
-        cursor.moveToFirst();
-        String storedPassword = cursor.getString(2);
-        cursor.close();
-
-        // Compare passwords
-        if (password.equals(storedPassword)) {
-            Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show();
-
-            Intent intent = new Intent(login_page.this, dashboard_withnav_page.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-
-        } else {
-            Toast.makeText(this, "Incorrect password", Toast.LENGTH_SHORT).show();
+        if (attemptLoginByEmail(emailOrUsername, password)) {
+            return; // Success
         }
+
+        // Both failed
+        Toast.makeText(this, "Invalid email/username or password", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Attempt login using username
+     */
+    private boolean attemptLoginByEmail(String email, String plainPassword) {
+        Cursor cursor = null;
+        try {
+            cursor = dbManager.fetchUserByEmail(email);
+
+            // Check if cursor is valid and has data
+            if (cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
+                int passwordIndex = cursor.getColumnIndexOrThrow(DatabaseHelper.USER_PASSWORD);
+                String storedHash = cursor.getString(passwordIndex);
+
+                int userIdIndex = cursor.getColumnIndexOrThrow(DatabaseHelper.USER_ID);
+                long userId = cursor.getLong(userIdIndex);
+
+                if (PasswordUtils.verifyPassword(plainPassword, storedHash)) {
+                    saveLoginState(userId);
+                    Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                    goToDashboard();
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            Log.e("LoginPage", "Login error", e);
+        } finally {
+            // ALWAYS close cursor in finally block
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return false;
+    }
+
+    private boolean attemptLoginByUsername(String username, String plainPassword) {
+        Cursor cursor = null;
+        try {
+            cursor = dbManager.fetchUserByUsername(username);
+
+            if (cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
+                int passwordIndex = cursor.getColumnIndexOrThrow(DatabaseHelper.USER_PASSWORD);
+                String storedHash = cursor.getString(passwordIndex);
+
+                int userIdIndex = cursor.getColumnIndexOrThrow(DatabaseHelper.USER_ID);
+                long userId = cursor.getLong(userIdIndex);
+
+                if (PasswordUtils.verifyPassword(plainPassword, storedHash)) {
+                    saveLoginState(userId);
+                    Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                    goToDashboard();
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            Log.e("LoginPage", "Login error", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Save logged-in user ID for session management
+     */
+    private void saveLoginState(long userId) {
+        SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong("current_user_id", userId);
+        editor.apply();
+    }
+
+    /**
+     * Navigate to dashboard with clear task stack
+     */
+    private void goToDashboard() {
+        Intent intent = new Intent(login_page.this, dashboard_withnav_page.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override
