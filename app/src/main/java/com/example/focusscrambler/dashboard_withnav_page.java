@@ -11,8 +11,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
 
 public class dashboard_withnav_page extends AppCompatActivity {
 
@@ -39,6 +47,10 @@ public class dashboard_withnav_page extends AppCompatActivity {
     private static final long MIN_DURATION = 5 * 60 * 1000;      // 05:00
     private static final long MAX_DURATION = 95 * 60 * 1000;     // 95:00
     private static final long ADJUSTMENT_AMOUNT = 5 * 60 * 1000; // 5 minutes
+
+    // Calendar RecyclerView elements
+    private RecyclerView calendarRecyclerView;
+    private CalendarDateAdapter calendarAdapter;
 
 
     @Override
@@ -72,6 +84,43 @@ public class dashboard_withnav_page extends AppCompatActivity {
 
         btnAddActivity.setOnClickListener(v -> Toast.makeText(this, "Add Activity Clicked", Toast.LENGTH_SHORT).show());
         btnHistory.setOnClickListener(v -> Toast.makeText(this, "History Clicked", Toast.LENGTH_SHORT).show());
+
+        // --- Initialize and set up the Calendar RecyclerView ---
+        setupCalendarRecyclerView();
+    }
+
+    // -------------------------------------------------------------------------
+    // CALENDAR RECYCLERVIEW SETUP METHODS
+    // -------------------------------------------------------------------------
+
+    private void setupCalendarRecyclerView() {
+        calendarRecyclerView = findViewById(R.id.calendarRecyclerView);
+
+        // LinearLayoutManager for horizontal scrolling.
+        // It's also defined in XML, but can be set here if not.
+        // calendarRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        List<CalendarDate> dates = generateSampleDates();
+        calendarAdapter = new CalendarDateAdapter(dates);
+        calendarRecyclerView.setAdapter(calendarAdapter);
+    }
+
+    private List<CalendarDate> generateSampleDates() {
+        List<CalendarDate> dateList = new ArrayList<>();
+        Calendar calendar = Calendar.getInstance();
+
+        // Start from beginning of the week (e.g., Sunday or Monday)
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault()); // e.g., "Mon"
+
+        for (int i = 0; i < 14; i++) { // Generate 14 days
+            String dayOfWeek = dayFormat.format(calendar.getTime());
+            int dateNumber = calendar.get(Calendar.DAY_OF_MONTH);
+            dateList.add(new CalendarDate(dayOfWeek, dateNumber));
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        return dateList;
     }
 
     // -------------------------------------------------------------------------

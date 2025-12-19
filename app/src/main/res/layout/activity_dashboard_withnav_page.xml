@@ -6,7 +6,8 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"  tools:context=".dashboard_withnav_page">
+    android:background="#F5F5F5"
+    tools:context=".dashboard_withnav_page">
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
@@ -18,25 +19,37 @@
         app:layout_constraintRight_toRightOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main_content_area"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/nav_view"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/calendarRecyclerView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintTop_toBottomOf="@+id/toolbar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:listitem="@layout/item_calendar_date" />
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:background="?attr/colorPrimary"
             android:elevation="4dp"
             android:title="Dashboard"
+            android:minHeight="?attr/actionBarSize"
             android:titleTextColor="@android:color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -46,7 +59,7 @@
             android:id="@+id/btn_main_play_trigger"
             android:layout_width="258dp"
             android:layout_height="180dp"
-            android:layout_marginTop="150dp"
+            android:layout_marginTop="24dp"
             android:background="@drawable/round_button_green"
             android:drawableTop="@drawable/icons8_play_96"
             android:paddingTop="30dp"
@@ -54,13 +67,9 @@
             android:textColor="@color/white"
             android:textSize="18sp"
             app:drawableTint="@color/white"
-            app:layout_constraintBottom_toTopOf="@+id/textView2"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.496"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar"
-            app:layout_constraintVertical_bias="0.2"
-            app:layout_constraintVertical_chainStyle="packed" />
+            app:layout_constraintTop_toBottomOf="@+id/calendarRecyclerView" />
 
         <TextView
             android:id="@+id/textView2"

@@ -7,11 +7,6 @@
         android:title="Home" />
 
     <item
-        android:id="@+id/navigation_statistics"
-        android:icon="@drawable/baseline_query_stats_24"
-        android:title="Statistics" />
-
-    <item
         android:id="@+id/navigation_activities"
         android:icon="@drawable/baseline_local_activity_24"
         android:title="Activities" />
