@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed/Hover state -->
+    <item android:state_pressed="true">
+        <ripple android:color="#33B3E5FC"> <!-- Lighter blue ripple for hover effect -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="16dp"/>
+                    <solid android:color="#E0F2F7"/> <!-- Slightly blueish background when pressed -->
+                    <stroke android:width="2dp" android:color="#90B2DF"/> <!-- Blue border when pressed -->
+                </shape>
+            </item>
+        </ripple>
+    </item>
+
+    <!-- Default state -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp"/>
+            <solid android:color="#FFFFFF"/> <!-- White background -->
+            <stroke android:width="1dp" android:color="#E0E0E0"/> <!-- Thin grey border -->
+        </shape>
+    </item>
+</selector>

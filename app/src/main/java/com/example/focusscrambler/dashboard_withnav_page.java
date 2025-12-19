@@ -1,5 +1,6 @@
 package com.example.focusscrambler;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.app.AlertDialog;
@@ -73,9 +74,24 @@ public class dashboard_withnav_page extends AppCompatActivity {
 
         // 3. Setup Navigation Listener
         navView.setOnItemSelectedListener(item -> {
-            // ... (your existing navigation logic using R.id.navigation_...)
-            Toast.makeText(this, "Nav Item Selected: " + item.getTitle(), Toast.LENGTH_SHORT).show();
-            return true;
+            // Handle navigation clicks here, similar to your dashboard_withnav_page
+            // For example:
+            if (item.getItemId() == R.id.navigation_home) {
+                //startActivity(new Intent(this, dashboard_withnav_page.class));
+                //finish(); // Optional: finish current activity
+                Toast.makeText(this, "Home already selected", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (item.getItemId() == R.id.navigation_activities) {
+                // startActivity(new Intent(this, activities_page.class));
+                Toast.makeText(this, "Activities clicked", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (item.getItemId() == R.id.navigation_account) {
+                startActivity(new Intent(this, account_page.class));
+                //finish(); // Optional: finish current activity
+                Toast.makeText(this, "Account clicked", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            return false;
         });
 
         // 4. Handle Quick Action Clicks
@@ -108,16 +124,26 @@ public class dashboard_withnav_page extends AppCompatActivity {
     private List<CalendarDate> generateSampleDates() {
         List<CalendarDate> dateList = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
+        Calendar today = (Calendar) calendar.clone(); // Get today's date for comparison
 
         // Start from beginning of the week (e.g., Sunday or Monday)
+        // Adjust this if you want the calendar to start with today's date,
+        // or a specific past/future day. For now, it starts at the beginning of the week.
         calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+
 
         SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault()); // e.g., "Mon"
 
-        for (int i = 0; i < 14; i++) { // Generate 14 days
+        for (int i = 0; i < 14; i++) { // Generate 14 days (current week + next week)
             String dayOfWeek = dayFormat.format(calendar.getTime());
             int dateNumber = calendar.get(Calendar.DAY_OF_MONTH);
-            dateList.add(new CalendarDate(dayOfWeek, dateNumber));
+
+            // Check if this date is today's date
+            boolean isCurrentDay = (calendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                    calendar.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
+                    calendar.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH));
+
+            dateList.add(new CalendarDate(dayOfWeek, dateNumber, isCurrentDay));
             calendar.add(Calendar.DAY_OF_MONTH, 1);
         }
         return dateList;

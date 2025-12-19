@@ -1,16 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- <color name="purple_500">#FF6200EE</color>
+      <color name="purple_700">#FF3700B3</color>
+     <color name="teal_200">#FF03DAC5</color>
+     <color name="teal_700">#FF018786</color>
+     <color name="black">#FF000000</color>
+     <color name="white">#FFFFFFFF</color> -->
     <color name="orange">#FF5722</color>
     <color name="blue">#102f75</color>
     <color name="light_blue">#afebf6</color>
     <color name="something_blue">#59b1c2</color>
     <color name="green">#4ba875</color>
     <color name="wave_color">#0099ff</color>
+    <color name="purple_500">#0099ff</color> <!-- Example blue -->
+    <color name="purple_700">#007ACC</color> <!-- Example darker blue -->
+    <color name="teal_200">#7ED321</color> <!-- Your green accent -->
+    <color name="teal_700">#5BBE1A</color> <!-- Example darker green -->
+
+    <!-- Standard colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- Specific colors used in layout -->
+    <color name="medium_grey">#666666</color>
+    <color name="dark_grey">#333333</color>
+    <color name="light_grey">#E0E0E0</color>
+    <color name="light_blue_bg">#F0F2F7</color>
+    <color name="light_blue_border">#90B2DF</color>
+    <color name="red_error">#FF4444</color>
+    <color name="light_surface">#F5F5F5</color>
+    <color name="primary_text_dark_blue">#102f75</color>
 </resources>
