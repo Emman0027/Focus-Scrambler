@@ -43,4 +43,6 @@
     <color name="text_hint_grey">#999999</color>
     <color name="break_activity_green">#57C9C6</color>
     <color name="red_delete">#FF0000</color>
+    <color name="light_green">#C9E5C9</color>
+    <color name="grey">#444343</color>
 </resources>

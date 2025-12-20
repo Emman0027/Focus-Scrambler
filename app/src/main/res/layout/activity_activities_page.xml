@@ -17,7 +17,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Custom title layout inside Toolbar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -49,7 +48,6 @@
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <!-- Scrollable Content Area -->
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -61,7 +59,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="16dp" >
+            android:paddingBottom="16dp">
 
             <!-- Session Duration Header -->
             <LinearLayout
@@ -83,7 +81,7 @@
                 <ImageView
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:src="@drawable/ic_stopwatch"
+                    android:src="@drawable/clock_icon"
                     android:contentDescription="Stopwatch Icon"
                     android:tint="@android:color/white" />
 
@@ -91,13 +89,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Session Duration"
+                    android:text="Focus Session Duration"
                     android:textColor="@android:color/white"
                     android:textSize="18sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Session Duration Time and Control -->
+            <!-- Session Duration Time -->
             <TextView
                 android:id="@+id/tv_session_duration_time"
                 android:layout_width="0dp"
@@ -115,6 +113,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/session_duration_header" />
 
+            <!-- Session Duration Controls -->
             <Button
                 android:id="@+id/btn_session_duration_controls"
                 android:layout_width="56dp"
@@ -130,89 +129,83 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/tv_session_duration_time" />
 
-            <!-- Main Activity Input -->
-            <EditText
-                android:id="@+id/et_main_activity"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/rounded_edittext_bg"
-                android:hint="e.g. o Do 10 pushups"
-                android:inputType="text"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:textColor="@color/black"
-                android:textColorHint="#999999"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toStartOf="@+id/btn_add_main_activity"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_session_duration_time" />
-
-            <Button
-                android:id="@+id/btn_add_main_activity"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/rounded_add_btn_bg"
-                android:text="Add"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="@+id/et_main_activity"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/et_main_activity" />
-
-            <!-- Custom Break Activities Header -->
+            <!-- Pending Break Activities Header -->
             <TextView
-                android:id="@+id/tv_custom_break_activities_header"
+                android:id="@+id/tv_pending_break_activities_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="32dp"
-                android:text="Custom Break Activities"
+                android:layout_marginTop="30dp"
+                android:text="Pending Break Activities"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_main_activity" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_session_duration_time" />
 
-            <!-- Custom Break Activities Input -->
-            <EditText
-                android:id="@+id/et_break_activity"
+            <!-- Break Activity Input Row: EditText - Dropdown - Add Button -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/break_input_row"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/rounded_edittext_bg"
-                android:hint="e.g. o Do 10 pushups"
-                android:inputType="text"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:textColor="@color/black"
-                android:textColorHint="#999999"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toStartOf="@+id/btn_add_break_activity"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_custom_break_activities_header" />
-
-            <Button
-                android:id="@+id/btn_add_break_activity"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
                 android:layout_marginEnd="16dp"
-                android:background="@drawable/rounded_add_btn_bg"
-                android:text="Add"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="@+id/et_break_activity"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/et_break_activity" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_pending_break_activities_header">
 
-            <!-- RecyclerView for Break Activities -->
+                <!-- EditText -->
+                <EditText
+                    android:id="@+id/et_break_activity"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:background="@drawable/rounded_edittext_bg"
+                    android:hint="e.g. Do 10 pushups"
+                    android:inputType="text"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textColor="@color/black"
+                    android:textColorHint="#999999"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_break_duration_dropdown"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <!-- Break Duration Dropdown Button -->
+                <ImageButton
+                    android:id="@+id/btn_break_duration_dropdown"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/rounded_grey_timer_bg"
+                    android:src="@drawable/clock_icon"
+                    android:contentDescription="Set break duration (0s-5m)"
+                    android:scaleType="centerInside"
+                    app:layout_constraintBottom_toBottomOf="@+id/et_break_activity"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_add_break_activity"
+                    app:layout_constraintStart_toEndOf="@+id/et_break_activity"
+                    app:layout_constraintTop_toTopOf="@+id/et_break_activity" />
+
+                <!-- Add Button -->
+                <Button
+                    android:id="@+id/btn_add_break_activity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:background="@drawable/rounded_add_btn_bg"
+                    android:text="Add"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="@+id/et_break_activity"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/et_break_activity" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- RecyclerView for Pending Break Activities -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_break_activities"
                 android:layout_width="0dp"
@@ -220,10 +213,43 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_break_activity"
-                tools:itemCount="5"
+                app:layout_constraintTop_toBottomOf="@+id/break_input_row"
+                tools:itemCount="3"
+
+                tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_break_activity"
+                tools:orientation="vertical" />
+
+            <!-- Done Activities Header -->
+            <TextView
+                android:id="@+id/tv_done_activities_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="24dp"
+                android:text="Done Activities"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/rv_break_activities" />
+
+            <!-- RecyclerView for Done Activities -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_done_activities"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="80dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_done_activities_header"
+                tools:itemCount="2"
                 tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:listitem="@layout/item_break_activity"
                 tools:orientation="vertical" />
@@ -231,8 +257,6 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
-
-    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
         android:layout_width="0dp"
@@ -242,6 +266,5 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:menu="@menu/bottom_nav_menu" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,17 +1,20 @@
 package com.example.focusscrambler;
 
+import android.Manifest;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +25,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -29,7 +35,6 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.IOException;
-import java.util.Locale;
 
 import android.app.AlertDialog;
 import android.widget.EditText;
@@ -37,6 +42,8 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
 public class account_page extends AppCompatActivity {
+
+    private static final int DND_PERMISSION_REQUEST_CODE = 1001;
 
     private Toolbar toolbar;
     private CardView profileCard;
@@ -47,22 +54,19 @@ public class account_page extends AppCompatActivity {
     // Personal Info TextViews
     private TextView tvUsername, tvFirstName, tvLastName, tvEmail;
 
-    // SeekBar and Switch
-    private SeekBar seekbarFocusDuration;
-    private TextView tvFocusDurationValue;
-    private SeekBar seekbarBreakDuration;
-    private TextView tvBreakDurationValue;
+    // Do Not Disturb Switch
     private Switch switchDoNotDisturb;
 
-    // Buttons
-    private Button btnSaveChanges;
+    // Logout Card
     private CardView cardLogout;
 
     private ActivityResultLauncher<String> pickImageLauncher;
     private DatabaseManager dbManager;
-    private long currentUserId = -1; // Track logged-in user
+    private long currentUserId = -1;
     private ImageView ivEditUsername, ivEditFirstName, ivEditLastName;
-    private boolean isEditingUsername = false, isEditingFirstName = false, isEditingLastName = false;
+
+    // DND Components
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,11 +76,14 @@ public class account_page extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
-        // ✅ NEW: Initialize DatabaseManager
+        // Initialize NotificationManager for DND
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Initialize DatabaseManager
         dbManager = new DatabaseManager(this);
         try {
             dbManager.open();
@@ -86,7 +93,7 @@ public class account_page extends AppCompatActivity {
             return;
         }
 
-        // Get current user ID from SharedPreferences (set during login)
+        // Get current user ID
         currentUserId = getCurrentUserId();
         if (currentUserId == -1) {
             Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show();
@@ -98,36 +105,27 @@ public class account_page extends AppCompatActivity {
         initUI();
         setupNavigation();
         setupImagePicker();
-        setupSeekBars();
+        setupDoNotDisturb();
         setupButtons();
 
-        // ✅ LOAD REAL USER DATA
+        // Load user data
         loadUserSettings();
     }
 
-    /** ✅ NEW: Get logged-in user ID from SharedPreferences */
     private long getCurrentUserId() {
         SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
         return prefs.getLong("current_user_id", -1);
     }
 
-    /** ✅ NEW: Load REAL user data from database */
     private void loadUserSettings() {
         Cursor cursor = null;
         try {
-            // Fetch user by ID
             cursor = dbManager.fetchUserById(currentUserId);
-
             if (cursor != null && cursor.moveToFirst()) {
-                // ✅ Populate UI with REAL database data
                 tvFirstName.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_FIRST_NAME)));
                 tvLastName.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_LAST_NAME)));
                 tvUsername.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_USERNAME)));
                 tvEmail.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.USER_EMAIL)));
-
-                Toast.makeText(this, "Loaded user data", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show();
@@ -137,33 +135,133 @@ public class account_page extends AppCompatActivity {
             }
         }
 
-        // Load settings (SeekBars, Switch) from SharedPreferences
-        loadAppSettings();
+        // Load DND setting and sync with system
+        loadDoNotDisturbSetting();
     }
 
-    /** ✅ NEW: Load app settings from SharedPreferences */
-    private void loadAppSettings() {
+    private void loadDoNotDisturbSetting() {
         SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
+        boolean isDndEnabled = prefs.getBoolean("dnd_enabled", false);
+        switchDoNotDisturb.setChecked(isDndEnabled);
 
-        seekbarFocusDuration.setProgress(prefs.getInt("focus_duration", 30));
-        tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%d min", prefs.getInt("focus_duration", 30)));
-
-        seekbarBreakDuration.setProgress(prefs.getInt("break_duration", 10));
-        tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%d min", prefs.getInt("break_duration", 10)));
-
-        switchDoNotDisturb.setChecked(prefs.getBoolean("dnd_enabled", true));
+        // Sync switch state with actual system DND state
+        syncDndSwitchWithSystem();
     }
 
-    /** Save settings to SharedPreferences */
-    private void saveAppSettings() {
-        SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt("focus_duration", seekbarFocusDuration.getProgress());
-        editor.putInt("break_duration", seekbarBreakDuration.getProgress());
-        editor.putBoolean("dnd_enabled", switchDoNotDisturb.isChecked());
-        editor.apply();
+    /**
+     * ✅ FULL DND IMPLEMENTATION with Android System Integration
+     */
+    private void setupDoNotDisturb() {
+        switchDoNotDisturb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                enableDoNotDisturb();
+            } else {
+                disableDoNotDisturb();
+            }
+        });
+    }
 
-        Toast.makeText(this, "Settings saved!", Toast.LENGTH_SHORT).show();
+    private void enableDoNotDisturb() {
+        // Check permissions first
+        if (!hasDndPermission()) {
+            requestDndPermission();
+            return;
+        }
+
+        try {
+            SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean("dnd_enabled", true);
+            editor.apply();
+
+            // Set system DND mode
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                Toast.makeText(this, "✅ Do Not Disturb enabled (Priority only)", Toast.LENGTH_SHORT).show();
+            } else {
+                // Fallback for older Android versions
+                Toast.makeText(this, "✅ Do Not Disturb enabled", Toast.LENGTH_SHORT).show();
+            }
+
+            Log.d("DND", "Do Not Disturb enabled by Focus Scrambler");
+        } catch (SecurityException e) {
+            Toast.makeText(this, "❌ DND permission denied. Please enable manually.", Toast.LENGTH_LONG).show();
+            switchDoNotDisturb.setChecked(false);
+        }
+    }
+
+    private void disableDoNotDisturb() {
+        try {
+            SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean("dnd_enabled", false);
+            editor.apply();
+
+            // Turn off system DND
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+                Toast.makeText(this, "✅ Do Not Disturb disabled", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "✅ Do Not Disturb disabled", Toast.LENGTH_SHORT).show();
+            }
+
+            Log.d("DND", "Do Not Disturb disabled by Focus Scrambler");
+        } catch (SecurityException e) {
+            Toast.makeText(this, "❌ Cannot disable DND. Permission required.", Toast.LENGTH_SHORT).show();
+            switchDoNotDisturb.setChecked(true);
+        }
+    }
+
+    /**
+     * Check if app has DND permission
+     */
+    private boolean hasDndPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return notificationManager.isNotificationPolicyAccessGranted();
+        }
+        return true; // Older versions don't need permission
+    }
+
+    /**
+     * Request DND permission from user
+     */
+    private void requestDndPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!notificationManager.isNotificationPolicyAccessGranted()) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Enable Do Not Disturb")
+                        .setMessage("Focus Scrambler needs permission to control Do Not Disturb mode. Allow access?")
+                        .setPositiveButton("Settings", (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> {
+                            switchDoNotDisturb.setChecked(false);
+                        })
+                        .show();
+            }
+        }
+    }
+
+    /**
+     * Sync switch with actual system DND state
+     */
+    private void syncDndSwitchWithSystem() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int currentInterruptionFilter = notificationManager.getCurrentInterruptionFilter();
+            boolean systemDndActive = currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL;
+
+            SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
+            boolean appDndState = prefs.getBoolean("dnd_enabled", false);
+
+            // Sync if there's a mismatch
+            if (systemDndActive != appDndState) {
+                switchDoNotDisturb.setChecked(systemDndActive);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean("dnd_enabled", systemDndActive);
+                editor.apply();
+            }
+        }
     }
 
     private void initUI() {
@@ -183,16 +281,9 @@ public class account_page extends AppCompatActivity {
         tvLastName = findViewById(R.id.tv_last_name);
         tvEmail = findViewById(R.id.tv_email);
 
-        seekbarFocusDuration = findViewById(R.id.seekbar_focus_duration);
-        tvFocusDurationValue = findViewById(R.id.tv_focus_duration_value);
-        seekbarBreakDuration = findViewById(R.id.seekbar_break_duration);
-        tvBreakDurationValue = findViewById(R.id.tv_break_duration_value);
         switchDoNotDisturb = findViewById(R.id.switch_do_not_disturb);
-
-        btnSaveChanges = findViewById(R.id.btn_save_settings);
         cardLogout = findViewById(R.id.card_logout);
 
-        // ✅ Find Edit Icons (give them IDs in XML first - see Step 2)
         ivEditUsername = findViewById(R.id.iv_edit_username);
         ivEditFirstName = findViewById(R.id.iv_edit_first_name);
         ivEditLastName = findViewById(R.id.iv_edit_last_name);
@@ -233,41 +324,11 @@ public class account_page extends AppCompatActivity {
         cameraIcon.setOnClickListener(v -> openImagePicker());
     }
 
-    private void setupSeekBars() {
-        seekbarFocusDuration.setMin(5);
-        seekbarFocusDuration.setMax(90);
-        seekbarFocusDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int min = seekBar.getMin();
-                int steppedProgress = ((progress - min) / 5) * 5 + min;
-                if (steppedProgress < min) steppedProgress = min;
-                seekBar.setProgress(steppedProgress);
-                tvFocusDurationValue.setText(String.format(Locale.getDefault(), "%d min", steppedProgress));
-            }
-
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        seekbarBreakDuration.setMin(1);
-        seekbarBreakDuration.setMax(30);
-        seekbarBreakDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tvBreakDurationValue.setText(String.format(Locale.getDefault(), "%d min", progress));
-            }
-
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-    }
-
     private void setupButtons() {
-        btnSaveChanges.setOnClickListener(v -> saveAppSettings());
-
         cardLogout.setOnClickListener(v -> {
-            // Clear login state
+            // Disable DND before logout
+            disableDoNotDisturb();
+
             SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove("current_user_id");
@@ -279,31 +340,24 @@ public class account_page extends AppCompatActivity {
         });
     }
 
-    // ✅ NEW: Setup all edit listeners
     private void setupEditListeners() {
-        // Username Card + Edit Icon
         findViewById(R.id.card_username).setOnClickListener(v -> showEditDialog("username"));
         ivEditUsername.setOnClickListener(v -> showEditDialog("username"));
 
-        // First Name Card + Edit Icon
         findViewById(R.id.card_first_name).setOnClickListener(v -> showEditDialog("first_name"));
         ivEditFirstName.setOnClickListener(v -> showEditDialog("first_name"));
 
-        // Last Name Card + Edit Icon
         findViewById(R.id.card_last_name).setOnClickListener(v -> showEditDialog("last_name"));
         ivEditLastName.setOnClickListener(v -> showEditDialog("last_name"));
     }
 
-    // ✅ NEW: Universal Edit Dialog
     private void showEditDialog(String fieldType) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Edit " + fieldType.toUpperCase());
 
-        // Create EditText dynamically
         final EditText editText = new EditText(this);
         editText.setPadding(48, 48, 48, 48);
 
-        // Pre-fill current value
         String currentValue = "";
         switch (fieldType) {
             case "username":
@@ -317,25 +371,19 @@ public class account_page extends AppCompatActivity {
                 break;
         }
         editText.setText(currentValue);
-        editText.setSelection(currentValue.length()); // Focus cursor at end
+        editText.setSelection(currentValue.length());
 
         builder.setView(editText);
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             String newValue = editText.getText().toString().trim();
-
-            // Validation
             if (newValue.isEmpty()) {
                 Toast.makeText(this, "Field cannot be empty", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Update UI immediately
             updateFieldUI(fieldType, newValue);
-
-            // ✅ Update DATABASE
             updateUserInDatabase(fieldType, newValue);
-
             hideKeyboard();
         });
 
@@ -343,7 +391,6 @@ public class account_page extends AppCompatActivity {
         builder.show();
     }
 
-    // ✅ NEW: Update TextView UI
     private void updateFieldUI(String fieldType, String newValue) {
         switch (fieldType) {
             case "username":
@@ -359,7 +406,6 @@ public class account_page extends AppCompatActivity {
         Toast.makeText(this, fieldType.toUpperCase() + " updated!", Toast.LENGTH_SHORT).show();
     }
 
-    // ✅ NEW: Update database
     private void updateUserInDatabase(String fieldType, String newValue) {
         try {
             ContentValues values = new ContentValues();
@@ -394,7 +440,6 @@ public class account_page extends AppCompatActivity {
         }
     }
 
-    // ✅ NEW: Hide keyboard utility
     private void hideKeyboard() {
         View view = this.getCurrentFocus();
         if (view != null) {
@@ -403,9 +448,15 @@ public class account_page extends AppCompatActivity {
         }
     }
 
-
     private void openImagePicker() {
         pickImageLauncher.launch("image/*");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Sync DND state when returning to activity
+        syncDndSwitchWithSystem();
     }
 
     @Override
@@ -415,6 +466,4 @@ public class account_page extends AppCompatActivity {
             dbManager.close();
         }
     }
-
-
 }

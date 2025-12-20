@@ -1,10 +1,11 @@
 package com.example.focusscrambler;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.app.AlertDialog;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -25,121 +26,313 @@ import java.util.Locale;
 
 public class dashboard_withnav_page extends AppCompatActivity {
 
-    // 1. Declare UI elements and Timer Variables
-
-    // UI elements for the main Activity (declared in the code below)
+    // UI elements
     private ProgressBar progressBar;
     private BottomNavigationView navView;
-    private Button btnMainPlayTrigger;
+    private TextView txtTimerCurrentValue;
+    private TextView txtTimerTypeLabel;
+    private Button btnStart, btnPause, btnStop;
+    private TextView txtSessionsProgress;
+    private TextView txtNextSessionActivity;
 
-    // UI elements that will be located INSIDE the dialog (declared in the code above)
-    private TextView txt_timer;
-    private Button btn_start, btn_stop, btn_pause, btn_add, btn_subtract;
-    private AlertDialog timerDialog;
-
-    // Timer state and data variables (declared in both)
+    // Timer state and data variables
     private CountDownTimer countDownTimer;
     private long timeLeftInMillis;
-    private long currentSessionDuration;
+    private long currentSessionTargetDuration;
     private boolean isTimerRunning = false;
+    private boolean isFocusSession = true;
+    private int currentSessionNumber = 0;
+    private int totalSessionsGoal = 3;
 
-    // Constants (Cleaned up and maintained the set used in the previous solution)
-    private static final long DEFAULT_DURATION = 25 * 60 * 1000; // 25:00
-    private static final long MIN_DURATION = 5 * 60 * 1000;      // 05:00
-    private static final long MAX_DURATION = 95 * 60 * 1000;     // 95:00
-    private static final long ADJUSTMENT_AMOUNT = 5 * 60 * 1000; // 5 minutes
+    // Database and User specific
+    private DatabaseManager dbManager;
+    private long currentUserId = -1;
+    private List<BreakActivity> availableBreakActivities;
+    private int currentBreakActivityIndex = 0;
+
+    // Constants
+    private static final long DEFAULT_FOCUS_DURATION = 20 * 1000;
+    private static final long DEFAULT_BREAK_DURATION = 20 * 1000;
 
     // Calendar RecyclerView elements
     private RecyclerView calendarRecyclerView;
     private CalendarDateAdapter calendarAdapter;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard_withnav_page);
 
-        // 2. Initialize Permanent Views (from Activity layout)
+        // Initialize DatabaseManager
+        dbManager = new DatabaseManager(this);
+        try {
+            dbManager.open();
+        } catch (Exception e) {
+            Log.e("Dashboard", "Database open failed", e);
+            Toast.makeText(this, "Database error. Please restart app.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // Get current user ID
+        currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            Toast.makeText(this, "Please login first", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, login_page.class));
+            finish();
+            return;
+        }
+
+        // Initialize UI elements
         progressBar = findViewById(R.id.progressBar3);
         navView = findViewById(R.id.nav_view);
-        btnMainPlayTrigger = findViewById(R.id.btn_main_play_trigger);
+        txtTimerCurrentValue = findViewById(R.id.txt_timer_current_value);
+        txtTimerTypeLabel = findViewById(R.id.txt_timer_type_label);
+        btnStart = findViewById(R.id.btn_start);
+        btnPause = findViewById(R.id.btn_pause);
+        btnStop = findViewById(R.id.btn_stop);
+        txtSessionsProgress = findViewById(R.id.txt_sessions);
+        txtNextSessionActivity = findViewById(R.id.txt_next_session_activity);
 
         // Initial setup
-        timeLeftInMillis = DEFAULT_DURATION;
-        currentSessionDuration = DEFAULT_DURATION; // Initialize current session duration
-        updateActivityUI();
+        timeLeftInMillis = DEFAULT_FOCUS_DURATION;
+        currentSessionTargetDuration = DEFAULT_FOCUS_DURATION;
+        isFocusSession = true;
+        updateTimerUI();
+        updateProgressBar();
+        loadBreakActivities();
+        updateNextSessionText();
+        updateTimerButtonState(); // ✅ Added initial button state
 
-        // Set listener for the main play button to open the dialog
-        btnMainPlayTrigger.setOnClickListener(v -> showTimerDialog());
+        // Set listeners for timer buttons
+        btnStart.setOnClickListener(v -> startTimer());
+        btnPause.setOnClickListener(v -> pauseTimer());
+        btnStop.setOnClickListener(v -> stopTimer());
 
-        // 3. Setup Navigation Listener
+        // Setup Navigation Listener
         navView.setOnItemSelectedListener(item -> {
-            // Handle navigation clicks here, similar to your dashboard_withnav_page
-            // For example:
             if (item.getItemId() == R.id.navigation_home) {
-                //startActivity(new Intent(this, dashboard_withnav_page.class));
-                //finish(); // Optional: finish current activity
-                Toast.makeText(this, "Home already selected", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (item.getItemId() == R.id.navigation_activities) {
                 startActivity(new Intent(this, activities_page.class));
-                finish(); // Optional: finish current activity
-                Toast.makeText(this, "Activities clicked", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (item.getItemId() == R.id.navigation_account) {
                 startActivity(new Intent(this, account_page.class));
-                finish(); // Optional: finish current activity
-                Toast.makeText(this, "Account clicked", Toast.LENGTH_SHORT).show();
                 return true;
             }
             return false;
         });
 
-        // 4. Handle Quick Action Clicks
+        // Handle Quick Action Clicks
         Button btnAddActivity = findViewById(R.id.btn_add_activity);
         Button btnHistory = findViewById(R.id.btn_history);
 
-        btnAddActivity.setOnClickListener(v -> Toast.makeText(this, "Add Activity Clicked", Toast.LENGTH_SHORT).show());
-        btnHistory.setOnClickListener(v -> Toast.makeText(this, "History Clicked", Toast.LENGTH_SHORT).show());
+        btnAddActivity.setOnClickListener(v -> {
+            startActivity(new Intent(this, activities_page.class));
+            // finish(); // Keep dashboard open
+        });
 
-        // --- Initialize and set up the Calendar RecyclerView ---
+// ✅ HISTORY BUTTON - Opens history_page
+        btnHistory.setOnClickListener(v -> {
+            startActivity(new Intent(this, history_page.class));
+            // finish(); // Optional: uncomment to close dashboard when going to history
+        });
+
+        // Initialize and set up the Calendar RecyclerView
         setupCalendarRecyclerView();
     }
 
-    // -------------------------------------------------------------------------
-    // CALENDAR RECYCLERVIEW SETUP METHODS
-    // -------------------------------------------------------------------------
+    // --- User Management ---
+    private long getCurrentUserId() {
+        SharedPreferences prefs = getSharedPreferences("FocusScramblerPrefs", MODE_PRIVATE);
+        return prefs.getLong("current_user_id", -1);
+    }
 
+    // --- Break Activities Logic ---
+    private void loadBreakActivities() {
+        availableBreakActivities = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = dbManager.getBreakActivitiesForUser(currentUserId);
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    String task = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.BREAK_TASK));
+                    int duration = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.BREAK_DURATION));
+                    long id = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.BREAK_ID));
+                    availableBreakActivities.add(new BreakActivity(task, duration, id));
+                } while (cursor.moveToNext());
+            } else {
+                availableBreakActivities.add(new BreakActivity("Take a 5-minute walk", 5, -1));
+                availableBreakActivities.add(new BreakActivity("Stretch for 5 minutes", 5, -1));
+                availableBreakActivities.add(new BreakActivity("Drink a glass of water", 5, -1));
+            }
+        } catch (Exception e) {
+            Log.e("Dashboard", "Error loading break activities", e);
+            availableBreakActivities.add(new BreakActivity("Take a short break", 5, -1));
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    private BreakActivity getNextBreakActivity() {
+        if (availableBreakActivities.isEmpty()) {
+            return new BreakActivity("Rest your eyes", 5, -1);
+        }
+        BreakActivity next = availableBreakActivities.get(currentBreakActivityIndex % availableBreakActivities.size());
+        return next;
+    }
+
+    private void updateNextSessionText() {
+        if (isFocusSession) {
+            BreakActivity nextBreak = getNextBreakActivity();
+            txtNextSessionActivity.setText(String.format("Break Time (%s)", nextBreak.getDescription()));
+        } else {
+            txtNextSessionActivity.setText("Focus Time (25 min)");
+        }
+    }
+
+    // --- Timer Control ---
+    private void startTimer() {
+        if (isTimerRunning) return;
+
+        isTimerRunning = true;
+        countDownTimer = new CountDownTimer(timeLeftInMillis, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timeLeftInMillis = millisUntilFinished;
+                updateTimerUI();
+                updateProgressBar();
+                updateTimerButtonState(); // ✅ Update buttons on every tick
+            }
+
+            @Override
+            public void onFinish() {
+                isTimerRunning = false;
+                if (isFocusSession) {
+                    Toast.makeText(dashboard_withnav_page.this, "Focus Session Finished! Time for a Break!", Toast.LENGTH_SHORT).show();
+                    currentSessionNumber++;
+                    switchSessionType(false);
+                } else {
+                    Toast.makeText(dashboard_withnav_page.this, "Break Finished! Back to Focus!", Toast.LENGTH_SHORT).show();
+                    currentBreakActivityIndex++;
+                    switchSessionType(true);
+                }
+            }
+        }.start();
+
+        updateTimerButtonState(); // ✅ Update after starting
+    }
+
+    private void pauseTimer() {
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+        isTimerRunning = false;
+        updateTimerButtonState(); // ✅ Update after pausing
+        Toast.makeText(this, "Timer Paused", Toast.LENGTH_SHORT).show();
+    }
+
+    private void stopTimer() {
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+        isTimerRunning = false;
+        isFocusSession = true;
+        timeLeftInMillis = DEFAULT_FOCUS_DURATION;
+        currentSessionTargetDuration = DEFAULT_FOCUS_DURATION;
+        currentSessionNumber = 0;
+        currentBreakActivityIndex = 0;
+        updateTimerUI();
+        updateProgressBar();
+        updateNextSessionText();
+        updateTimerButtonState(); // ✅ Update after reset
+        Toast.makeText(this, "Timer Stopped and Reset", Toast.LENGTH_SHORT).show();
+    }
+
+    private void switchSessionType(boolean toFocus) {
+        isFocusSession = toFocus;
+        if (isFocusSession) {
+            timeLeftInMillis = DEFAULT_FOCUS_DURATION;
+            currentSessionTargetDuration = DEFAULT_FOCUS_DURATION;
+            txtTimerTypeLabel.setText("Focus Time");
+            updateNextSessionText();
+        } else {
+            BreakActivity breakActivity = getNextBreakActivity();
+            timeLeftInMillis = breakActivity.getDurationMinutes() * 60 * 1000L;
+            currentSessionTargetDuration = timeLeftInMillis;
+            txtTimerTypeLabel.setText("Break Time");
+            txtNextSessionActivity.setText("Focus Time (25 min)");
+        }
+        updateTimerUI();
+        updateProgressBar();
+        updateTimerButtonState(); // ✅ Update button states
+        startTimer();
+    }
+
+    // --- UI Update Methods ---
+    private void updateTimerUI() {
+        int minutes = (int) (timeLeftInMillis / 1000) / 60;
+        int seconds = (int) (timeLeftInMillis / 1000) % 60;
+        String timeFormatted = String.format("%02d:%02d", minutes, seconds);
+        txtTimerCurrentValue.setText(timeFormatted);
+    }
+
+    private void updateProgressBar() {
+        if (currentSessionTargetDuration > 0) {
+            int progress = (int) (((double) (currentSessionTargetDuration - timeLeftInMillis) / currentSessionTargetDuration) * 100);
+            progressBar.setProgress(progress);
+        } else {
+            progressBar.setProgress(0);
+        }
+        txtSessionsProgress.setText(String.format(Locale.getDefault(), "%d/%d Sessions", currentSessionNumber, totalSessionsGoal));
+    }
+
+    /** ✅ NEW BUTTON STATE LOGIC - Clean 3-state management */
+    private void updateTimerButtonState() {
+        if (isTimerRunning) {
+            // State: RUNNING
+            btnStart.setEnabled(false);
+            btnPause.setEnabled(true);
+            btnPause.setText("Pause");
+            btnStop.setEnabled(true);
+        } else if (timeLeftInMillis == currentSessionTargetDuration) {
+            // State: STOPPED/Initial Duration Set
+            btnStart.setEnabled(true);
+            btnStart.setText("Start");
+            btnPause.setEnabled(false);
+            btnPause.setText("Pause");
+            btnStop.setEnabled(true);
+        } else {
+            // State: PAUSED or Adjusted time set but not started
+            btnStart.setEnabled(true);
+            btnStart.setText("Resume");
+            btnPause.setEnabled(false);
+            btnPause.setText("Pause");
+            btnStop.setEnabled(true);
+        }
+    }
+
+    // --- Calendar RecyclerView Setup ---
     private void setupCalendarRecyclerView() {
         calendarRecyclerView = findViewById(R.id.calendarRecyclerView);
-
-        // LinearLayoutManager for horizontal scrolling.
-        // It's also defined in XML, but can be set here if not.
-        // calendarRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
         List<CalendarDate> dates = generateSampleDates();
         calendarAdapter = new CalendarDateAdapter(dates);
+        calendarRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         calendarRecyclerView.setAdapter(calendarAdapter);
     }
 
     private List<CalendarDate> generateSampleDates() {
         List<CalendarDate> dateList = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
-        Calendar today = (Calendar) calendar.clone(); // Get today's date for comparison
+        Calendar today = (Calendar) calendar.clone();
 
-        // Start from beginning of the week (e.g., Sunday or Monday)
-        // Adjust this if you want the calendar to start with today's date,
-        // or a specific past/future day. For now, it starts at the beginning of the week.
         calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
 
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault());
 
-        SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault()); // e.g., "Mon"
-
-        for (int i = 0; i < 14; i++) { // Generate 14 days (current week + next week)
+        for (int i = 0; i < 14; i++) {
             String dayOfWeek = dayFormat.format(calendar.getTime());
             int dateNumber = calendar.get(Calendar.DAY_OF_MONTH);
-
-            // Check if this date is today's date
             boolean isCurrentDay = (calendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
                     calendar.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
                     calendar.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH));
@@ -150,210 +343,22 @@ public class dashboard_withnav_page extends AppCompatActivity {
         return dateList;
     }
 
-    // -------------------------------------------------------------------------
-    // DIALOG AND TIMER CONTROL METHODS
-    // -------------------------------------------------------------------------
-
-    private void showTimerDialog() {
-        // Prevent opening dialog if timer is running and the user somehow triggered the button
-        if (isTimerRunning) {
-            Toast.makeText(this, "Timer is currently running.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 1. Inflate the dialog layout
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View dialogView = inflater.inflate(R.layout.dialog_timer_control, null); // Assumes dialog_timer_control.xml exists
-
-        // 2. Initialize UI elements from the dialog view
-        txt_timer = dialogView.findViewById(R.id.dialog_txt_timer);
-        btn_start = dialogView.findViewById(R.id.dialog_btn_start);
-        btn_pause = dialogView.findViewById(R.id.dialog_btn_pause);
-        btn_stop = dialogView.findViewById(R.id.dialog_btn_stop);
-        btn_add = dialogView.findViewById(R.id.dialog_btn_add);
-        btn_subtract = dialogView.findViewById(R.id.dialog_btn_subtract);
-
-        // 3. Update dialog UI state and set up listeners
-        updateDialogUI();
-
-        btn_add.setOnClickListener(v -> adjustTimer(ADJUSTMENT_AMOUNT));
-        btn_subtract.setOnClickListener(v -> adjustTimer(-ADJUSTMENT_AMOUNT));
-
-        btn_start.setOnClickListener(v -> startTimer(timeLeftInMillis));
-
-        btn_pause.setOnClickListener(v -> {
-            if (isTimerRunning) {
-                pauseTimer();
-            } else if (timeLeftInMillis > 1000) {
-                resumeTimer();
-            }
-        });
-
-        btn_stop.setOnClickListener(v -> stopTimer());
-
-        // 4. Create and show the AlertDialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(dialogView);
-        timerDialog = builder.create();
-        timerDialog.show();
-    }
-
-    // -------------------------------------------------------------------------
-    // TIMER LOGIC METHODS
-    // -------------------------------------------------------------------------
-
-    private void startTimer(long duration) {
-        if (isTimerRunning) return;
-
-        currentSessionDuration = duration; // Save the starting duration for progress bar
-        timeLeftInMillis = duration;
-        isTimerRunning = true;
-
-        countDownTimer = new CountDownTimer(timeLeftInMillis, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                timeLeftInMillis = millisUntilFinished;
-                updateDialogUI();
-                updateActivityUI(); // Update the progress bar on the main activity
-            }
-
-            @Override
-            public void onFinish() {
-                isTimerRunning = false;
-                Toast.makeText(dashboard_withnav_page.this, "Session Finished!", Toast.LENGTH_SHORT).show();
-                stopTimer();
-            }
-        }.start();
-
-        // Update UI immediately after starting
-        updateDialogUI();
-    }
-
-    private void pauseTimer() {
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-        isTimerRunning = false;
-        updateDialogUI();
-    }
-
-    private void resumeTimer() {
-        if (timeLeftInMillis > 1000) {
-            startTimer(timeLeftInMillis);
-        }
-    }
-
-    private void stopTimer() {
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-        isTimerRunning = false;
-        timeLeftInMillis = DEFAULT_DURATION; // Reset to the default time
-        currentSessionDuration = DEFAULT_DURATION; // Reset current session duration
-
-        // Dismiss the dialog if it's open
-        if (timerDialog != null && timerDialog.isShowing()) {
-            timerDialog.dismiss();
-        }
-
-        // Reset the state of the main Activity UI (progress bar)
-        updateActivityUI();
-    }
-
-    // -------------------------------------------------------------------------
-    // TIME ADJUSTMENT METHOD
-    // -------------------------------------------------------------------------
-
-    private void adjustTimer(long adjustment) {
-        if (isTimerRunning) {
-            Toast.makeText(this, "Pause timer to adjust time.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        long newTime = timeLeftInMillis + adjustment;
-
-        if (newTime < MIN_DURATION) {
-            timeLeftInMillis = MIN_DURATION;
-            Toast.makeText(this, "Minimum duration is 05:00 minutes.", Toast.LENGTH_SHORT).show();
-        }
-        else if (newTime > MAX_DURATION) {
-            timeLeftInMillis = MAX_DURATION;
-            Toast.makeText(this, "Maximum duration is 95:00 minutes.", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            timeLeftInMillis = newTime;
-        }
-
-        // Update currentSessionDuration to match the adjusted time
-        currentSessionDuration = timeLeftInMillis;
-
-        // Update the dialog UI to reflect the new time
-        updateDialogUI();
-    }
-
-    // -------------------------------------------------------------------------
-    // UI UPDATE METHODS
-    // -------------------------------------------------------------------------
-
-    private void updateDialogUI() {
-        if (txt_timer == null) return; // Safety check if dialog is not visible
-
-        // 1. Update Time Display
-        int minutes = (int) (timeLeftInMillis / 1000) / 60;
-        int seconds = (int) (timeLeftInMillis / 1000) % 60;
-        String timeFormatted = String.format("%02d:%02d", minutes, seconds);
-
-        txt_timer.setText(timeFormatted);
-
-        // 2. Update Button States
-
-        // Adjustment buttons enabled only when timer is NOT running
-        boolean enableAdjustment = !isTimerRunning;
-        btn_add.setEnabled(enableAdjustment);
-        btn_subtract.setEnabled(enableAdjustment);
-
-        btn_stop.setEnabled(isTimerRunning || timeLeftInMillis < currentSessionDuration);
-
-        if (isTimerRunning) {
-            // State: RUNNING
-            btn_start.setEnabled(false);
-            btn_pause.setEnabled(true);
-            btn_pause.setText("Pause");
-        } else if (timeLeftInMillis == currentSessionDuration) {
-            // State: STOPPED/Initial Duration Set
-            btn_start.setEnabled(true);
-            btn_start.setText("Start");
-            btn_pause.setEnabled(false);
-            btn_pause.setText("Pause");
-        } else {
-            // State: PAUSED or Adjusted time set but not started
-            btn_start.setEnabled(true);
-            btn_start.setText("Resume");
-            btn_pause.setEnabled(false);
-            btn_pause.setText("Pause");
-        }
-    }
-
-    // Method to update the ProgressBar on the main Activity screen
-    private void updateActivityUI() {
-        if (progressBar == null) return; // Safety check for main Activity view
-
-        if (isTimerRunning) {
-            // Update progress bar based on the current session duration
-            int progress = (int) (((double) (currentSessionDuration - timeLeftInMillis) / currentSessionDuration) * 100);
-            progressBar.setProgress(progress);
-        } else {
-            // When timer is stopped, reset progress to 0
-            progressBar.setProgress(0);
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadBreakActivities();
+        updateNextSessionText();
+        updateTimerButtonState();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Stop the timer when the Activity is destroyed
         if (countDownTimer != null) {
             countDownTimer.cancel();
+        }
+        if (dbManager != null) {
+            dbManager.close();
         }
     }
 }
