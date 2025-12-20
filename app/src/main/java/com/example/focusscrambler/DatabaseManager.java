@@ -9,7 +9,7 @@ import java.sql.SQLDataException;
 public class DatabaseManager {
     private DatabaseHelper dbHelper;
     private Context context;
-    private SQLiteDatabase database;
+    public SQLiteDatabase database;
 
     public DatabaseManager(Context ctx) {
         context = ctx;
@@ -56,6 +56,21 @@ public class DatabaseManager {
             cursor.moveToFirst();
         }
         return cursor;
+    }
+
+    public Cursor fetchUserById(long userId) {
+        String[] columns = new String[]{
+                DatabaseHelper.USER_ID,
+                DatabaseHelper.USER_FIRST_NAME,
+                DatabaseHelper.USER_LAST_NAME,
+                DatabaseHelper.USER_USERNAME,
+                DatabaseHelper.USER_EMAIL
+        };
+
+        String selection = DatabaseHelper.USER_ID + " = ?";
+        String[] selectionArgs = new String[]{String.valueOf(userId)};
+
+        return database.query(DatabaseHelper.TABLE_USERS, columns, selection, selectionArgs, null, null, null);
     }
 
     // ✅ UPDATED: Use correct table name
