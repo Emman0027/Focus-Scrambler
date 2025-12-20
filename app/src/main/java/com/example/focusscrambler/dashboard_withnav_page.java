@@ -82,12 +82,13 @@ public class dashboard_withnav_page extends AppCompatActivity {
                 Toast.makeText(this, "Home already selected", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (item.getItemId() == R.id.navigation_activities) {
-                // startActivity(new Intent(this, activities_page.class));
+                startActivity(new Intent(this, activities_page.class));
+                finish(); // Optional: finish current activity
                 Toast.makeText(this, "Activities clicked", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (item.getItemId() == R.id.navigation_account) {
                 startActivity(new Intent(this, account_page.class));
-                //finish(); // Optional: finish current activity
+                finish(); // Optional: finish current activity
                 Toast.makeText(this, "Account clicked", Toast.LENGTH_SHORT).show();
                 return true;
             }

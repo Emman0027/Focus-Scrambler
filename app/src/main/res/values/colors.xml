@@ -34,4 +34,13 @@
     <color name="light_surface">#F5F5F5</color>
     <color name="primary_text_dark_blue">#102f75</color>
     <color name="page_background_light">#F5F5F5</color> <!-- For consistent background -->
+
+    <!-- Colors specifically for Activities Page -->
+    <color name="blue_primary_activities">#1E65D7</color>
+    <color name="grey_timer_background">#F0F0F0</color>
+    <color name="grey_timer_border">#E0E0E0</color>
+
+    <color name="text_hint_grey">#999999</color>
+    <color name="break_activity_green">#57C9C6</color>
+    <color name="red_delete">#FF0000</color>
 </resources>

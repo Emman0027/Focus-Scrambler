@@ -207,8 +207,7 @@ public class account_page extends AppCompatActivity {
                 finish();
                 return true;
             } else if (item.getItemId() == R.id.navigation_activities) {
-                Toast.makeText(this, "Activities clicked (not implemented)", Toast.LENGTH_SHORT).show();
-                return true;
+                startActivity(new Intent(this, activities_page.class));
             }
             return item.getItemId() == R.id.navigation_account;
         });
